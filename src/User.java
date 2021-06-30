@@ -14,7 +14,7 @@ public class User {
         this.phoneNumber = phoneNumber;
         this.emailAddress = emailAddress;
         this.passWord = passWord;
-        file = new File(nationalCode+"-"+passWord);
+        file = new File("src/" +nationalCode+"-"+passWord);
         file.mkdir();
     }
 }

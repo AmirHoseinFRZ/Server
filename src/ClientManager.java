@@ -8,7 +8,7 @@ public class ClientManager implements Runnable {
     InputStream inputStream;
     OutputStream outputStream;
     DataInputStream in;
-    PrintWriter out;
+    DataOutputStream out;
     public ClientManager(Socket client) {
         this.client = client;
     }
@@ -17,25 +17,38 @@ public class ClientManager implements Runnable {
             inputStream = client.getInputStream();
             outputStream = client.getOutputStream();
             in = new DataInputStream(inputStream);
-            out = new PrintWriter(outputStream, true);
+            out = new DataOutputStream(outputStream);
             if(in.readUTF().equals("signUp"))
             {
+                System.out.println("signUp");
                 signUp();
                 if(in.readUTF().equals("createAccount"))
                 {
+                    System.out.println("createAccount");
                     createAccount();
                 }
                 else
                 {
-
+                    //System.out.println("back");
                 }
             }
             else
             {
+                System.out.println("signIn");
                 signIn();
-                if(in.readUTF().equals("createAccount"))
+                if(in.readUTF().equals("LogIn"))
                 {
-                    createAccount();
+                    logIn();
+                    if (in.readUTF().equals("enter"))
+                    {
+                        //enter();
+                    }
+                    else
+                        System.out.println("back");
+                }
+                else
+                {
+                    //System.out.println("back");
                 }
             }
 
@@ -51,14 +64,14 @@ public class ClientManager implements Runnable {
             String passWord = in.readUTF();
             User user = new User(userName,nationalCode,phoneNumber,emailAddress, passWord);
             nationalCode_PassWord = nationalCode + "-" + passWord;
-            PrintWriter printWriter;
-            File file = new File(nationalCode+"-"+passWord + "/information.txt");
-            printWriter = new PrintWriter(file);
-            printWriter.println(user.userName);
-            printWriter.println(user.nationalCode);
-            printWriter.println(user.phoneNumber);
-            printWriter.println(user.emailAddress);
-            printWriter.println(user.passWord);
+            File file = new File("src/" + nationalCode + "-" + passWord + "/information.txt");
+            PrintWriter printWriter = new PrintWriter(file);
+            printWriter.println(userName);
+            printWriter.println(nationalCode);
+            printWriter.println(phoneNumber);
+            printWriter.println(emailAddress);
+            printWriter.println(passWord);
+            printWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -69,9 +82,11 @@ public class ClientManager implements Runnable {
             String nationalCode = in.readUTF();
             String passWord = in.readUTF();
             nationalCode_PassWord = nationalCode + "-" + passWord;
-            File file = new File(nationalCode+"-"+passWord);
-            if(file.exists())  out.print(true);
-            else out.print(false);
+            File file = new File("src/" + nationalCode+"-"+passWord);
+            if(file.exists())
+                out.writeBoolean(true);
+            else
+                out.writeBoolean(false);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -79,34 +94,50 @@ public class ClientManager implements Runnable {
     public void createAccount()
     {
         try {
-            int accountType = in.readInt();//0 -> current account, 1 -> short saving account, 2 -> long saving account, 3 -> flat account
+            String accountType = in.readUTF();//0 -> current account, 1 -> short saving account, 2 -> long saving account, 3 -> flat account
             String passWord = in.readUTF();
             String alias = in.readUTF();
             Account account = new Account(passWord, alias, accountType);
-            File file = new File(nationalCode_PassWord + "/" + account.alias + "-" + account.passWord + ".txt");
+            File file = new File("src/" + nationalCode_PassWord + "/" + account.alias + "-" + account.passWord + ".txt");
             PrintWriter printWriter = new PrintWriter(file);
             printWriter.println(account.alias);
             printWriter.println(account.accountNumber);
             printWriter.println(account.accountType);
             printWriter.println(account.accountBalance);
             printWriter.println(account.passWord);
+            printWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    public void seeingInformationOfAccounts()
+    public void logIn()
+    {
+        try {
+            String alias = in.readUTF();
+            String passWord = in.readUTF();
+            File file = new File("src/" + nationalCode_PassWord + "/" + alias + "-" + passWord + ".txt");
+            if(file.exists())
+                out.writeBoolean(true);
+            else
+                out.writeBoolean(false);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+    /*public void seeingInformationOfAccounts()
     {
         try {
             String passWord = in.readUTF();
             String alias = in.readUTF();
             File file = new File(nationalCode_PassWord + "/" + alias + "-" + passWord + ".txt");
             if(file.exists())
-                out.print(file);///////
+                out.writeUTF(file);///////
             else
                 out.print("noFile");////////
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-    }
+    }*/
 }
