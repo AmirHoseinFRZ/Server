@@ -21,108 +21,20 @@ public class ClientManager implements Runnable {
             outputStream = client.getOutputStream();
             in = new DataInputStream(inputStream);
             out = new DataOutputStream(outputStream);
-
-            if(in.readUTF().equals("signUp"))
-            {
-                signUp();
-                System.out.println("signUp");
-                if(in.readUTF().equals("createAccount"))
-                {
-                    createAccount();
-                    System.out.println("createAccount");
-                    if(in.readUTF().equals("enter"))
-                    {
-                        enter();
-                        System.out.println("enter");
-                        String clientRequest = in.readUTF();
-                        if(clientRequest.equals("transmission"))
-                        {
-                            transmission();
-                        }
-                        else if(clientRequest.equals("payment"))
-                        {
-                            //payment();
-                        }
-                        else if(clientRequest.equals("logOut"))
-                        {
-                            //logOut
-                        }
-                        else if(clientRequest.equals("logOut"))
-                        {
-                            //loan();
-                        }
-                        else if(clientRequest.equals("information"))
-                        {
-                            seeingInformationOfAccounts();
-                        }
-                        else if(clientRequest.equals("createAccount"))
-                        {
-                            createAccount();
-                            if(in.readUTF().equals("enter"))//badan dorost mishe
-                                enter();
-
-                        }
-                        else
-                            System.out.println("back");
-                    }
-                    else
-                        System.out.println("back");
-                }
-                else
-                {
-                    System.out.println("back");
-                }
-            }
-            else
-            {
-                signIn();
-                if(in.readUTF().equals("LogIn"))
-                {
-                    logIn();
-                    if (in.readUTF().equals("enter"))
-                    {
-                        enter();
-                        System.out.println("enter");
-                        String clientRequest = in.readUTF();
-                        System.out.println(clientRequest);
-                        if(clientRequest.equals("transmission"))
-                        {
-                            transmission();
-                        }
-                        else if(clientRequest.equals("payment"))
-                        {
-                            //payment();
-                        }
-                        else if(clientRequest.equals("logOut"))
-                        {
-                            //logOut
-                        }
-                        else if(clientRequest.equals("logOut"))
-                        {
-                            //loan();
-                        }
-                        else if(clientRequest.equals("information"))
-                        {
-                            seeingInformationOfAccounts();
-                        }
-                        else if(clientRequest.equals("createAccount"))
-                        {
-                            createAccount();
-                            if(in.readUTF().equals("enter"))
-                                enter();
-                        }
-                        //else
-                           //System.out.println("back");
-                    }
-                    //else
-                        //System.out.println("back");
-                }
-                //else {
-                  //  System.out.println("back");
-                }
-            //}
-
+            signUpOrSignIn();
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void signUpOrSignIn()
+    {
+        try {
+            System.out.println("signUpOrSignIn");
+            if(in.readUTF().equals("signUp"))
+                signUp();
+            else
+                signIn();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -133,6 +45,7 @@ public class ClientManager implements Runnable {
                 signUp();
             else
             {
+                System.out.println("signUp");
                 String userName = in.readUTF();
                 String nationalCode = in.readUTF();
                 String phoneNumber = in.readUTF();
@@ -148,6 +61,8 @@ public class ClientManager implements Runnable {
                 printWriter.println(emailAddress);
                 printWriter.println(passWord);
                 printWriter.close();
+                if(in.readUTF().equals("createAccount"))
+                    createAccount();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -156,18 +71,26 @@ public class ClientManager implements Runnable {
     public void signIn()
     {
         try {
-            System.out.println("signIn");
-            String nationalCode = in.readUTF();
+            if (in.readUTF().equals("continue"))
+            {
+                System.out.println("signIn");
+                String nationalCode = in.readUTF();
                 String passWord = in.readUTF();
                 nationalCode_PassWord = nationalCode + "-" + passWord;
                 File file = new File("src/" + nationalCode + "-" + passWord);
                 if(file.exists())
+                {
                     out.writeBoolean(true);
+                    logIn();
+                }
                 else
                 {
                     out.writeBoolean(false);
                     signIn();
                 }
+            }
+            else
+                signUpOrSignIn();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -175,6 +98,7 @@ public class ClientManager implements Runnable {
     public void createAccount()
     {
         try {
+            System.out.println("createAccount");
             String accountType = in.readUTF();//0 -> current account, 1 -> short saving account, 2 -> long saving account, 3 -> flat account
             String passWord = in.readUTF();
             String alias = in.readUTF();
@@ -192,6 +116,8 @@ public class ClientManager implements Runnable {
             File file1 = new File("src/" + nationalCode_PassWord + "/transaction" + account.alias + "-" + account.passWord + ".txt");
             PrintWriter printWriter1 = new PrintWriter(file1);
             printWriter1.print("");
+            if(in.readUTF().equals("enter"))
+                enter();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -199,40 +125,49 @@ public class ClientManager implements Runnable {
     public void logIn()
     {
         try {
-            String alias = in.readUTF();
-            String passWord = in.readUTF();
-            alias_Password = alias + "-" + passWord;
-            File file = new File("src/" + nationalCode_PassWord);
-            ArrayList<String> names = new ArrayList<String>();
-            for (int z = 0; z < file.list().length; z++)
-                names.add(file.list()[z]);
-            String name = "0";
-            int i = 0;
-            while(i < names.size())
+            if(in.readUTF().equals("continue"))
             {
-                if(names.get(i).contains(alias + "-" + passWord + ".") && !(names.get(i).contains("transaction")))
+                System.out.println("logIn");
+                String alias = in.readUTF();
+                String passWord = in.readUTF();
+                alias_Password = alias + "-" + passWord;
+                File file = new File("src/" + nationalCode_PassWord);
+                ArrayList<String> names = new ArrayList<String>();
+                for (int z = 0; z < file.list().length; z++)
+                    names.add(file.list()[z]);
+                String name = "0";
+                int i = 0;
+                while(i < names.size())
                 {
-                    name = names.get(i);
-                    break;
+                    if(names.get(i).contains(alias + "-" + passWord + ".") && !(names.get(i).contains("transaction")))
+                    {
+                        name = names.get(i);
+                        break;
+                    }
+                    i++;
                 }
-                i++;
-            }
-            if(name != "0")
-            {
-                for (int j = name.length() - 12; j <= name.length() - 5; j++)
+                if(name != "0")
                 {
-                    if(j == name.length() - 12)
-                        number = name.charAt(j) + "";
-                    else
-                        number += name.charAt(j);
+                    for (int j = name.length() - 12; j <= name.length() - 5; j++)
+                    {
+                        if(j == name.length() - 12)
+                            number = name.charAt(j) + "";
+                        else
+                            number += name.charAt(j);
+                    }
+                    out.writeBoolean(true);
+                    enter();
+                    System.out.println("after enter");
                 }
-                out.writeBoolean(true);
+                else
+                {
+                    out.writeBoolean(false);
+                    logIn();
+                    System.out.println("false");
+                }
             }
             else
-            {
-                out.writeBoolean(false);
-                logIn();
-            }
+                signIn();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -256,6 +191,8 @@ public class ClientManager implements Runnable {
                 out.writeUTF(scanner1.nextLine());
                 i++;
             }
+            if(in.readUTF().equals("done"))
+                enter();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -263,6 +200,7 @@ public class ClientManager implements Runnable {
     public void enter()
     {
         try {
+            System.out.println("enter");
             File accountInformation = new File("src/" + nationalCode_PassWord + "/" + alias_Password + "." + number + ".txt");
             Scanner scanner = new Scanner(accountInformation);
             int i = 0;
@@ -270,13 +208,34 @@ public class ClientManager implements Runnable {
                 out.writeUTF(scanner.nextLine());
                 i++;
             }
+            System.out.println(0);
+            String clientRequest = in.readUTF();
+            if(clientRequest.equals("transmission"))
+                transmission();
+            else if(clientRequest.equals("payment"))
+            {
+                //payment();
+            }
+            else if(clientRequest.equals("logOut"))
+            {
+                //logOut
+            }
+            else if(clientRequest.equals("loan"))
+            {
+                //loan();
+            }
+            else if(clientRequest.equals("information"))
+                seeingInformationOfAccounts();
+            else if(clientRequest.equals("createAccount"))
+                createAccount();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
     public synchronized void  transmission() throws IOException {
         System.out.println("search");
-        if(in.readUTF().equals("search")) {
+        String clientRequest = in.readUTF();
+        if(clientRequest.equals("search") || clientRequest.equals("transmit")) {
             try {
                 int sw = 0;
                 String destinationNumber = in.readUTF();
@@ -311,7 +270,8 @@ public class ClientManager implements Runnable {
                     }
                     i++;
                 }
-                if (destinationFile != null) {
+                if (destinationFile != null)
+                {
                     out.writeBoolean(true);
                     Scanner scanner1 = new Scanner(destinationFile);
                     String destinationAlias = scanner1.nextLine();
@@ -403,17 +363,18 @@ public class ClientManager implements Runnable {
                             fileWriter1.close();
                             enter();
                         }
-                    } else {
-                        out.writeBoolean(false);
-                        transmission();
                     }
+                }
+                else
+                {
+                    out.writeBoolean(false);
+                    transmission();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        else//back
+            enter();
     }
-
-
-
 }
