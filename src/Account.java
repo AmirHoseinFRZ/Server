@@ -11,7 +11,10 @@ public class Account {
         accountBalance = 1000.0;
         this.accountType = accountType;
         int accountNumber = ((int) (Math.random() * 100000000));
-        this.accountNumber = String.valueOf(accountNumber);
+        if(accountNumber >= 10000000)
+            this.accountNumber = String.valueOf(accountNumber);
+        else
+            this.accountNumber = "0" + String.valueOf(accountNumber);
     }
 
 }
