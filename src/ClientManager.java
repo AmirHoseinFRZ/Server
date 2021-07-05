@@ -257,146 +257,146 @@ public class ClientManager implements Runnable {
                 int sw = 0;
                 String destinationNumber = in.readUTF();
                 String amount = in.readUTF();
-                String folderName = "";
-                String destinationAlis_Password_number = "";
-                File destinationFile = null;
-
-                File folder = new File("src");
-                ArrayList<String> names = new ArrayList<String>();
-                for (int i = 0; i < folder.list().length; i++)
-                    names.add(folder.list()[i]);
-                int i = 0;
-                while (i < names.size() && sw == 0) {
-                    File file = new File("src/" + names.get(i));
-                    if (file.isDirectory()) {
-                        ArrayList<String> filenames = new ArrayList<String>();
-                        for (int j = 0; j < file.list().length; j++)
-                            filenames.add(file.list()[j]);
-                        int z = 0;
-                        while (z < filenames.size()) {
-                            if (filenames.get(z).contains(destinationNumber) && !(filenames.get(z).contains("transaction"))) {
-                                System.out.println("if");
-                                File file1 = new File("src/" + file.getName() + "/" + filenames.get(z));
-                                destinationFile = file1;
-                                destinationAlis_Password_number = filenames.get(z);
-                                folderName = file.getName();
-                                sw = 1;
-                                break;
-                            }
-                            z++;
-                        }
-                    }
-                    i++;
-                }
-                if (destinationFile != null)
+                if(in.readBoolean())
                 {
-                    System.out.println("if2");
-                    out.writeBoolean(true);
-                    Scanner scanner1 = new Scanner(destinationFile);
-                    String destinationAlias = scanner1.nextLine();
-                    //scanner1.close();
-                    out.writeUTF(destinationAlias);
-                    String username = null;
-                    ArrayList<String> folderNameC = new ArrayList<String>();
-                    for (int x = 0; x < folderName.length(); x++)
-                        folderNameC.add(String.valueOf(folderName.charAt(x)));
-                    int x = 0;
-                    while (!(folderNameC.get(x).equals("-"))) {
-                        if (x == 0)
-                            username = folderNameC.get(x);
-                        else
-                            username += folderNameC.get(x);
-                        x++;
-                    }
-                    out.writeUTF(username);
-                    System.out.println("beforetransmit");
-                    if (in.readUTF().equals("transmit")) {
-                        System.out.println("transmit");
-                        String information = "0";
-                        i = 0;
-                        FileReader fileReader = new FileReader(destinationFile);
-                        BufferedReader bufferedReader = new BufferedReader(fileReader);
-                        while (i < 5) {
-                            if (i == 3) {
-                                information += String.valueOf((Double.valueOf(bufferedReader.readLine()) + Double.valueOf(amount))) + '\n';
-                            } else {
-                                if (i == 0)
-                                    information = bufferedReader.readLine() + '\n';
-                                else
-                                    information += bufferedReader.readLine() + '\n';
+                    String folderName = "";
+                    String destinationAlis_Password_number = "";
+                    File destinationFile = null;
+
+                    File folder = new File("src");
+                    ArrayList<String> names = new ArrayList<String>();
+                    for (int i = 0; i < folder.list().length; i++)
+                        names.add(folder.list()[i]);
+                    int i = 0;
+                    while (i < names.size() && sw == 0) {
+                        File file = new File("src/" + names.get(i));
+                        if (file.isDirectory()) {
+                            ArrayList<String> filenames = new ArrayList<String>();
+                            for (int j = 0; j < file.list().length; j++)
+                                filenames.add(file.list()[j]);
+                            int z = 0;
+                            while (z < filenames.size()) {
+                                if (filenames.get(z).contains(destinationNumber) && !(filenames.get(z).contains("transaction"))) {
+                                    System.out.println("if");
+                                    File file1 = new File("src/" + file.getName() + "/" + filenames.get(z));
+                                    destinationFile = file1;
+                                    destinationAlis_Password_number = filenames.get(z);
+                                    folderName = file.getName();
+                                    sw = 1;
+                                    break;
+                                }
+                                z++;
                             }
-                            i++;
                         }
-                        fileReader.close();
-                        bufferedReader.close();
-                        String information1 = "";
-                        File file3 = new File("src/" + nationalCode_PassWord + "/" + alias_Password + "." + number + ".txt");
-                        FileReader fileReader1 = new FileReader(file3);
-                        BufferedReader bufferedReader1 = new BufferedReader(fileReader1);
-                        i = 0;
-                        Double accountsBalance = 0.0;
-                        while (i < 5) {
-                            if (i == 3) {
-                                accountsBalance = Double.valueOf(bufferedReader1.readLine());
-                                information1 += String.valueOf((accountsBalance - Double.valueOf(amount))) + '\n';
+                        i++;
+                    }
+                    if (destinationFile != null)
+                    {
+                        System.out.println("if2");
+                        out.writeBoolean(true);
+                        Scanner scanner1 = new Scanner(destinationFile);
+                        String destinationAlias = scanner1.nextLine();
+                        //scanner1.close();
+                        out.writeUTF(destinationAlias);
+                        File file6 = new File("src/" + folderName + "/information.txt");
+                        FileReader fileReader6 = new FileReader(file6);
+                        BufferedReader bufferedReader6 = new BufferedReader(fileReader6);
+                        String username = bufferedReader6.readLine();
+                        out.writeUTF(username);
+                        System.out.println(25);
+                        System.out.println(username);
+                        System.out.println("beforetransmit");
+                        if (in.readUTF().equals("transmit")) {
+                            System.out.println("transmit");
+                            String information = "0";
+                            i = 0;
+                            FileReader fileReader = new FileReader(destinationFile);
+                            BufferedReader bufferedReader = new BufferedReader(fileReader);
+                            while (i < 5) {
+                                if (i == 3) {
+                                    information += String.valueOf((Double.valueOf(bufferedReader.readLine()) + Double.valueOf(amount))) + '\n';
+                                } else {
+                                    if (i == 0)
+                                        information = bufferedReader.readLine() + '\n';
+                                    else
+                                        information += bufferedReader.readLine() + '\n';
+                                }
+                                i++;
+                            }
+                            fileReader.close();
+                            bufferedReader.close();
+                            String information1 = "";
+                            File file3 = new File("src/" + nationalCode_PassWord + "/" + alias_Password + "." + number + ".txt");
+                            FileReader fileReader1 = new FileReader(file3);
+                            BufferedReader bufferedReader1 = new BufferedReader(fileReader1);
+                            i = 0;
+                            Double accountsBalance = 0.0;
+                            while (i < 5) {
+                                if (i == 3) {
+                                    accountsBalance = Double.valueOf(bufferedReader1.readLine());
+                                    information1 += String.valueOf((accountsBalance - Double.valueOf(amount))) + '\n';
+                                }
+                                else
+                                {
+                                    if (i == 0)
+                                        information1 = bufferedReader1.readLine() + '\n';
+                                    else
+                                        information1 += bufferedReader1.readLine() + '\n';
+                                }
+                                i++;
+                            }
+                            fileReader1.close();
+                            bufferedReader1.close();
+                            if(accountsBalance < Double.valueOf(amount))
+                            {
+                                out.writeBoolean(false);
+                                transmission();
                             }
                             else
                             {
-                                if (i == 0)
-                                    information1 = bufferedReader1.readLine() + '\n';
-                                else
-                                    information1 += bufferedReader1.readLine() + '\n';
+                                out.writeBoolean(true);
+                                PrintWriter printWriter = new PrintWriter(destinationFile);
+                                printWriter.print(information);
+                                printWriter.close();
+                                PrintWriter printWriter1 = new PrintWriter(file3);
+                                printWriter1.print(information1);
+                                printWriter1.close();
+                                String destinationAlias_PassWord = "";
+                                for (int j = 0; j < destinationAlis_Password_number.length() - 13; j++)
+                                {
+                                    if(j == 0)
+                                        destinationAlias_PassWord = destinationAlis_Password_number.charAt(j) + "";
+                                    else
+                                        destinationAlias_PassWord += destinationAlis_Password_number.charAt(j);
+                                }
+                                System.out.println(destinationAlias_PassWord);
+                                File file4 = new File("src/" + folderName + "/" + "transaction" + destinationAlias_PassWord + ".txt");
+                                FileWriter fileWriter = new FileWriter(file4, true);
+                                fileWriter.append("Transmission    " + number + "    " + "+ " + Double.valueOf(amount) + '\n');
+                                fileWriter.close();
+                                File file5 = new File("src/" + nationalCode_PassWord + "/" + "transaction" + alias_Password+ ".txt");
+                                FileWriter fileWriter1 = new FileWriter(file5, true);
+                                fileWriter1.append("Transmission    " + destinationNumber + "    " + "- " + Double.valueOf(amount) + '\n');
+                                fileWriter1.close();
+                                enter();
                             }
-                            i++;
-                        }
-                        fileReader1.close();
-                        bufferedReader1.close();
-                        if(accountsBalance < Double.valueOf(amount))
-                        {
-                            out.writeBoolean(false);
-                            transmission();
                         }
                         else
                         {
-                            out.writeBoolean(true);
-                            PrintWriter printWriter = new PrintWriter(destinationFile);
-                            printWriter.print(information);
-                            printWriter.close();
-                            PrintWriter printWriter1 = new PrintWriter(file3);
-                            printWriter1.print(information1);
-                            printWriter1.close();
-                            String destinationAlias_PassWord = "";
-                            for (int j = 0; j < destinationAlis_Password_number.length() - 13; j++)
-                            {
-                                if(j == 0)
-                                    destinationAlias_PassWord = destinationAlis_Password_number.charAt(j) + "";
-                                else
-                                    destinationAlias_PassWord += destinationAlis_Password_number.charAt(j);
-                            }
-                            System.out.println(destinationAlias_PassWord);
-                            File file4 = new File("src/" + folderName + "/" + "transaction" + destinationAlias_PassWord + ".txt");
-                            FileWriter fileWriter = new FileWriter(file4, true);
-                            fileWriter.append("Transmission    " + number + "    " + "+ " + Double.valueOf(amount) + '\n');
-                            fileWriter.close();
-                            File file5 = new File("src/" + nationalCode_PassWord + "/" + "transaction" + alias_Password+ ".txt");
-                            FileWriter fileWriter1 = new FileWriter(file5, true);
-                            fileWriter1.append("Transmission    " + destinationNumber + "    " + "- " + Double.valueOf(amount) + '\n');
-                            fileWriter1.close();
+                            System.out.println("elseTransmit");
                             enter();
                         }
                     }
                     else
                     {
-                        System.out.println("elseTransmit");
+                        System.out.println("else2");
+                        out.writeBoolean(false);
                         transmission();
                     }
                 }
                 else
-                {
-                    System.out.println("else2");
-                    out.writeBoolean(false);
                     transmission();
-                }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -406,7 +406,6 @@ public class ClientManager implements Runnable {
             System.out.println("backToEnter");
             enter();
         }
-
     }
     public void loan()
     {
