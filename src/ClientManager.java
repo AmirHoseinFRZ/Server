@@ -42,29 +42,38 @@ public class ClientManager implements Runnable {
     public void signUp()
     {
         try {
-            if(!(in.readBoolean()))
-                signUp();
+            if(in.readUTF().equals("continue"))
+            {
+                if(!(in.readBoolean()))
+                    signUp();
+                else
+                {
+                    System.out.println("signUp");
+                    String userName = in.readUTF();
+                    String nationalCode = in.readUTF();
+                    String phoneNumber = in.readUTF();
+                    String emailAddress = in.readUTF();
+                    String passWord = in.readUTF();
+                    User user = new User(userName,nationalCode,phoneNumber,emailAddress, passWord);
+                    nationalCode_PassWord = nationalCode + "-" + passWord;
+                    File file = new File("src/" + nationalCode + "-" + passWord + "/information.txt");
+                    PrintWriter printWriter = new PrintWriter(file);
+                    printWriter.println(userName);
+                    printWriter.println(nationalCode);
+                    printWriter.println(phoneNumber);
+                    printWriter.println(emailAddress);
+                    printWriter.println(passWord);
+                    printWriter.close();
+                    if(in.readUTF().equals("createAccount"))
+                        createAccount();
+                }
+            }
             else
             {
-                System.out.println("signUp");
-                String userName = in.readUTF();
-                String nationalCode = in.readUTF();
-                String phoneNumber = in.readUTF();
-                String emailAddress = in.readUTF();
-                String passWord = in.readUTF();
-                User user = new User(userName,nationalCode,phoneNumber,emailAddress, passWord);
-                nationalCode_PassWord = nationalCode + "-" + passWord;
-                File file = new File("src/" + nationalCode + "-" + passWord + "/information.txt");
-                PrintWriter printWriter = new PrintWriter(file);
-                printWriter.println(userName);
-                printWriter.println(nationalCode);
-                printWriter.println(phoneNumber);
-                printWriter.println(emailAddress);
-                printWriter.println(passWord);
-                printWriter.close();
-                if(in.readUTF().equals("createAccount"))
-                    createAccount();
+                signUpOrSignIn();
+                System.out.println("gotofirst");
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -167,7 +176,7 @@ public class ClientManager implements Runnable {
                 }
             }
             else
-                signIn();
+                signUpOrSignIn();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -236,9 +245,7 @@ public class ClientManager implements Runnable {
             else if(clientRequest.equals("payment"))
                 payment();
             else if(clientRequest.equals("logOut"))
-            {
-                //logOut
-            }
+                logOut();
             else if(clientRequest.equals("loan"))
                 loan();
             else if(clientRequest.equals("information"))
@@ -558,5 +565,134 @@ public class ClientManager implements Runnable {
             e.printStackTrace();
         }
     }
+    public void logOut()
+    {
+        try {
+            String clientRequest = in.readUTF();
+            if(clientRequest.equals("logOut"))
+                signUpOrSignIn();
+            else if (clientRequest.equals("delete"))
+            {
+                System.out.println("delete");
+                if(in.readBoolean())
+                {
+                    System.out.println("after delete");
+                    String passWord = in.readUTF();
+                    String destinationNumber = in.readUTF();
+                    if(alias_Password.contains(passWord))
+                    {
+                        System.out.println("correct password");
+                        out.writeBoolean(true);
+                        File account = new File("src/" + nationalCode_PassWord + "/" + alias_Password + "." + number + ".txt");
+                        FileReader fileReader = new FileReader(account);
+                        BufferedReader bufferedReader = new BufferedReader(fileReader);
+                        int i = 0;
+                        String amount = "";
+                        while (i < 4)
+                        {
+                            if(i == 3)
+                                amount = bufferedReader.readLine();
+                            else
+                                amount = bufferedReader.readLine();
+                            i++;
+                        }
+                        fileReader.close();
+                        bufferedReader.close();
+                        System.out.println(amount);
+                        account.delete();
+                        String folderName = "";
+                        String destinationAlis_Password_number = "";
+                        File destinationFile = null;
+                        int sw = 0;
+                        File folder = new File("src");
+                        ArrayList<String> names = new ArrayList<String>();
+                        for (int j = 0; j < folder.list().length; j++)
+                            names.add(folder.list()[j]);
+                        i = 0;
+                        while (i < names.size() && sw == 0) {
+                            File file = new File("src/" + names.get(i));
+                            if (file.isDirectory()) {
+                                ArrayList<String> filenames = new ArrayList<String>();
+                                for (int j = 0; j < file.list().length; j++)
+                                    filenames.add(file.list()[j]);
+                                int z = 0;
+                                while (z < filenames.size()) {
+                                    if (filenames.get(z).contains(destinationNumber) && !(filenames.get(z).contains("transaction"))) {
+                                        System.out.println("if");
+                                        File file1 = new File("src/" + file.getName() + "/" + filenames.get(z));
+                                        destinationFile = file1;
+                                        destinationAlis_Password_number = filenames.get(z);
+                                        folderName = file.getName();
+                                        sw = 1;
+                                        break;
+                                    }
+                                    z++;
+                                }
+                            }
+                            i++;
+                        }
+                        if(destinationFile != null)
+                        {
+                            out.writeBoolean(true);
+                            String information = "0";
+                            i = 0;
+                            FileReader fileReader1 = new FileReader(destinationFile);
+                            BufferedReader bufferedReader1 = new BufferedReader(fileReader1);
+                            while (i < 5) {
+                                if (i == 3) {
+                                    information += String.valueOf((Double.valueOf(bufferedReader1.readLine()) + Double.valueOf(amount))) + '\n';
+                                } else {
+                                    if (i == 0)
+                                        information = bufferedReader1.readLine() + '\n';
+                                    else
+                                        information += bufferedReader1.readLine() + '\n';
+                                }
+                                i++;
+                            }
+                            fileReader.close();
+                            bufferedReader.close();
+                            PrintWriter printWriter = new PrintWriter(destinationFile);
+                            printWriter.print(information);
+                            printWriter.close();
+                            String destinationAlias_PassWord = "";
+                            for (int j = 0; j < destinationAlis_Password_number.length() - 13; j++)
+                            {
+                                if(j == 0)
+                                    destinationAlias_PassWord = destinationAlis_Password_number.charAt(j) + "";
+                                else
+                                    destinationAlias_PassWord += destinationAlis_Password_number.charAt(j);
+                            }
+                            File file4 = new File("src/" + folderName + "/" + "transaction" + destinationAlias_PassWord + ".txt");
+                            FileWriter fileWriter = new FileWriter(file4, true);
+                            fileWriter.append("Transmission    " + number + "    " + "+ " + Double.valueOf(amount) + '\n');
+                            fileWriter.close();
+                            File file2 = new File("src/" + nationalCode_PassWord + "/transaction" + alias_Password + ".txt");
+                            file2.delete();
+                            File file1 = new File("src/" + nationalCode_PassWord + "/loan." + alias_Password + ".txt");
+                            if (file1.exists())
+                                file1.delete();
+                            signUpOrSignIn();
+                        }
+                        else
+                        {
+                            out.writeBoolean(false);
+                            logOut();
+                        }
+                    }
+                    else
+                    {
+                        out.writeBoolean(false);
+                        logOut();
+                    }
+                }
+                else
+                    logOut();
+            }
+            else//back
+                enter();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+    }
 }
