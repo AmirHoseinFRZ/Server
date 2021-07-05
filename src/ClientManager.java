@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Scanner;
 
 public class ClientManager implements Runnable {
@@ -157,7 +158,6 @@ public class ClientManager implements Runnable {
                     }
                     out.writeBoolean(true);
                     enter();
-                    System.out.println("after enter");
                 }
                 else
                 {
@@ -175,23 +175,42 @@ public class ClientManager implements Runnable {
     public void seeingInformationOfAccounts()
     {
         try {
+            System.out.println("personalInfo");
             File userInformation = new File("src/" + nationalCode_PassWord + "/information.txt");
-            Scanner scanner = new Scanner(userInformation);
+            FileReader fileReader = new FileReader(userInformation);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
             int i = 0;
             while (i < 4)
             {
-                out.writeUTF(scanner.nextLine());
+                out.writeUTF(bufferedReader.readLine());
                 i++;
             }
+            fileReader.close();
+            bufferedReader.close();
             File accountInformation = new File("src/" + nationalCode_PassWord + "/" + alias_Password + "." + number +".txt");
-            Scanner scanner1 = new Scanner(accountInformation);
+            FileReader fileReader1 = new FileReader(accountInformation);
+            BufferedReader bufferedReader1 = new BufferedReader(fileReader1);
             i = 0;
             while (i < 4)
             {
-                out.writeUTF(scanner1.nextLine());
+                out.writeUTF(bufferedReader1.readLine());
                 i++;
             }
-            if(in.readUTF().equals("done"))
+            fileReader1.close();
+            bufferedReader1.close();
+            File transaction = new File("src/" + nationalCode_PassWord + "/transaction" + alias_Password + ".txt");
+            FileReader fileReader2 = new FileReader(transaction);
+            BufferedReader bufferedReader2 = new BufferedReader(fileReader2);
+            String information = "";
+            String line = "";
+            while ((line = bufferedReader2.readLine()) != null)
+            {
+                information += line + '\n';
+            }
+            fileReader2.close();
+            bufferedReader2.close();
+            out.writeUTF(information);
+            if(in.readUTF().equals("back"))
                 enter();
         } catch (IOException e) {
             e.printStackTrace();
@@ -202,28 +221,26 @@ public class ClientManager implements Runnable {
         try {
             System.out.println("enter");
             File accountInformation = new File("src/" + nationalCode_PassWord + "/" + alias_Password + "." + number + ".txt");
-            Scanner scanner = new Scanner(accountInformation);
+            FileReader fileReader = new FileReader(accountInformation);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
             int i = 0;
             while (i < 2) {
-                out.writeUTF(scanner.nextLine());
+                out.writeUTF(bufferedReader.readLine());
                 i++;
             }
-            System.out.println(0);
+            fileReader.close();
+            bufferedReader.close();
             String clientRequest = in.readUTF();
             if(clientRequest.equals("transmission"))
                 transmission();
             else if(clientRequest.equals("payment"))
-            {
-                //payment();
-            }
+                payment();
             else if(clientRequest.equals("logOut"))
             {
                 //logOut
             }
             else if(clientRequest.equals("loan"))
-            {
-                //loan();
-            }
+                loan();
             else if(clientRequest.equals("information"))
                 seeingInformationOfAccounts();
             else if(clientRequest.equals("createAccount"))
@@ -235,7 +252,7 @@ public class ClientManager implements Runnable {
     public synchronized void  transmission() throws IOException {
         System.out.println("search");
         String clientRequest = in.readUTF();
-        if(clientRequest.equals("search") || clientRequest.equals("transmit")) {
+        if(clientRequest.equals("search")) {
             try {
                 int sw = 0;
                 String destinationNumber = in.readUTF();
@@ -258,6 +275,7 @@ public class ClientManager implements Runnable {
                         int z = 0;
                         while (z < filenames.size()) {
                             if (filenames.get(z).contains(destinationNumber) && !(filenames.get(z).contains("transaction"))) {
+                                System.out.println("if");
                                 File file1 = new File("src/" + file.getName() + "/" + filenames.get(z));
                                 destinationFile = file1;
                                 destinationAlis_Password_number = filenames.get(z);
@@ -272,9 +290,11 @@ public class ClientManager implements Runnable {
                 }
                 if (destinationFile != null)
                 {
+                    System.out.println("if2");
                     out.writeBoolean(true);
                     Scanner scanner1 = new Scanner(destinationFile);
                     String destinationAlias = scanner1.nextLine();
+                    //scanner1.close();
                     out.writeUTF(destinationAlias);
                     String username = null;
                     ArrayList<String> folderNameC = new ArrayList<String>();
@@ -289,6 +309,7 @@ public class ClientManager implements Runnable {
                         x++;
                     }
                     out.writeUTF(username);
+                    System.out.println("beforetransmit");
                     if (in.readUTF().equals("transmit")) {
                         System.out.println("transmit");
                         String information = "0";
@@ -364,9 +385,15 @@ public class ClientManager implements Runnable {
                             enter();
                         }
                     }
+                    else
+                    {
+                        System.out.println("elseTransmit");
+                        transmission();
+                    }
                 }
                 else
                 {
+                    System.out.println("else2");
                     out.writeBoolean(false);
                     transmission();
                 }
@@ -375,6 +402,162 @@ public class ClientManager implements Runnable {
             }
         }
         else//back
+        {
+            System.out.println("backToEnter");
             enter();
+        }
+
     }
+    public void loan()
+    {
+        try {
+            if(in.readUTF().equals("done"))
+            {
+                if(in.readBoolean())
+                {
+                    String amount = in.readUTF();
+                    String payback = in.readUTF();
+                    File file = new File("src/" + nationalCode_PassWord + "/" + "loan." + alias_Password + ".txt");
+                    if(file.exists())
+                    {
+                        out.writeBoolean(false);
+                        loan();
+                    }
+                    else
+                    {
+                        out.writeBoolean(true);
+                        PrintWriter printWriter = new PrintWriter(file);
+                        printWriter.println(amount);
+                        printWriter.println(payback);
+                        printWriter.close();
+                        File file1 = new File("src/" + nationalCode_PassWord + "/" + alias_Password + "." + number + ".txt");
+                        FileReader fileReader = new FileReader(file1);
+                        BufferedReader bufferedReader = new BufferedReader(fileReader);
+                        String information = new String();
+                        int i = 0;
+                        while (i < 5) {
+                            if (i == 3) {
+                                information += String.valueOf((Double.valueOf(bufferedReader.readLine()) + Double.valueOf(amount))) + '\n';
+                            } else {
+                                if (i == 0)
+                                    information = bufferedReader.readLine() + '\n';
+                                else
+                                    information += bufferedReader.readLine() + '\n';
+                            }
+                            System.out.println(information);
+                            i++;
+                        }
+                        PrintWriter printWriter1 = new PrintWriter(file1);
+                        printWriter1.print(information);
+                        fileReader.close();
+                        bufferedReader.close();
+                        printWriter1.close();
+                        File file2 = new File("src/" + nationalCode_PassWord + "/" + "transaction" + alias_Password+ ".txt");
+                        FileWriter fileWriter = new FileWriter(file2, true);
+                        fileWriter.append("loan    "+ "+ " + Double.valueOf(amount) + '\n');
+                        fileWriter.close();
+                        enter();
+                    }
+                }
+                else
+                    loan();
+            }
+            else
+                enter();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void payment()
+    {
+        try {
+            if(in.readUTF().equals("search"))
+            {
+                System.out.println("search");
+                if(in.readBoolean())
+                {
+                    System.out.println(0);
+                    String billsNumber = in.readUTF();
+                    File bill = new File("src/payment/" + billsNumber + ".txt");
+                    if(bill.exists())
+                    {
+                        System.out.println(1);
+                        out.writeBoolean(true);
+                        FileReader fileReader = new FileReader(bill);
+                        BufferedReader bufferedReader = new BufferedReader(fileReader);
+                        String amount = bufferedReader.readLine();
+                        System.out.println(amount);
+                        String billsName = bufferedReader.readLine();
+                        System.out.println(billsName);
+                        fileReader.close();
+                        bufferedReader.close();
+                        out.writeUTF(amount);
+                        out.writeUTF(billsName);
+                        System.out.println(2);
+                        if(in.readUTF().equals("pay"))
+                        {
+                            System.out.println("pay");
+                            File file = new File("src/" + nationalCode_PassWord + "/" + alias_Password + "." + number + ".txt");
+                            FileReader fileReader1 = new FileReader(file);
+                            BufferedReader bufferedReader1 = new BufferedReader(fileReader1);
+                            int i = 0;
+                            String information = "";
+                            Double accountBalance = 0.0;
+                            while (i < 5)
+                            {
+                                if(i == 3)
+                                {
+                                    accountBalance = Double.valueOf(bufferedReader1.readLine());
+                                    information += String.valueOf(accountBalance - Double.valueOf(amount)) + '\n';
+                                }
+                                else
+                                {
+                                    if (i == 0)
+                                        information = bufferedReader1.readLine() + '\n';
+                                    else
+                                        information += bufferedReader1.readLine() + '\n';
+                                }
+                                i++;
+                            }
+                            fileReader1.close();
+                            bufferedReader1.close();
+                            if(accountBalance > Double.valueOf(amount))
+                            {
+                                out.writeBoolean(true);
+                                PrintWriter printWriter = new PrintWriter(file);
+                                printWriter.print(information);
+                                printWriter.close();
+                                bill.delete();
+                                File transaction = new File("src/" + nationalCode_PassWord + "/" + "transaction" + alias_Password+ ".txt");
+                                FileWriter fileWriter = new FileWriter(transaction, true);
+                                fileWriter.append("payment    " + "- " + amount + '\n');
+                                fileWriter.close();
+                                enter();
+                            }
+                            else
+                            {
+                                System.out.println(1);
+                                out.writeBoolean(false);
+                                enter();
+                            }
+                        }
+                        else//back
+                            enter();
+                    }
+                    else
+                    {
+                        out.writeBoolean(false);
+                        payment();
+                    }
+                }
+                else
+                    payment();
+            }
+            else
+                enter();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
