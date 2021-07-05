@@ -135,7 +135,8 @@ public class ClientManager implements Runnable {
     public void logIn()
     {
         try {
-            if(in.readUTF().equals("continue"))
+            String clientRequest = in.readUTF();
+            if(clientRequest.equals("continue"))
             {
                 System.out.println("logIn");
                 String alias = in.readUTF();
@@ -174,6 +175,61 @@ public class ClientManager implements Runnable {
                     logIn();
                     System.out.println("false");
                 }
+            }
+            else if(clientRequest.equals("most"))
+            {
+                System.out.println("most used selected");
+                File folder = new File("src/" + nationalCode_PassWord);
+                ArrayList<String> transactionNames = new ArrayList<String>();
+                for (int z = 0; z < folder.list().length; z++)
+                {
+                    if(folder.list()[z].contains("transaction"))
+                        transactionNames.add(folder.list()[z]);
+                }
+                ArrayList<File> transactionFiles = new ArrayList<File>();
+                int i = 0;
+                while (i < transactionNames.size())
+                {
+                    File file = new File("src/" + nationalCode_PassWord + "/" + transactionNames.get(i));
+                    transactionFiles.add(file);
+                    i++;
+                }
+                i = 0;
+                File mostUsed = null;
+                long length = transactionFiles.get(0).length();
+                while (i < transactionNames.size())
+                {
+                    if(transactionFiles.get(i).length() >= length)
+                    {
+                        mostUsed = transactionFiles.get(i);
+                        length = transactionFiles.get(i).length();
+                    }
+                    i++;
+                }
+                String mostUsedAlias_Password = "";
+                for(int j = 11; j < mostUsed.getName().length() - 4; j++)
+                    mostUsedAlias_Password += mostUsed.getName().charAt(j);
+                alias_Password = mostUsedAlias_Password;
+                String name = "";
+                System.out.println(alias_Password);
+                for (int j = 0; j < folder.list().length; j++)
+                {
+                    if(folder.list()[j].contains(alias_Password) && !(folder.list()[j].contains("transaction")))
+                    {
+                        name = folder.list()[j];
+                        break;
+                    }
+                }
+                for (int j = name.length() - 12; j <= name.length() - 5; j++)
+                {
+                    if(j == name.length() - 12)
+                        number = name.charAt(j) + "";
+                    else
+                        number += name.charAt(j);
+                }
+                System.out.println(number);
+                System.out.println(100);
+                enter();
             }
             else
                 signUpOrSignIn();
@@ -536,7 +592,7 @@ public class ClientManager implements Runnable {
                                 bill.delete();
                                 File transaction = new File("src/" + nationalCode_PassWord + "/" + "transaction" + alias_Password+ ".txt");
                                 FileWriter fileWriter = new FileWriter(transaction, true);
-                                fileWriter.append("payment    " + "- " + amount + '\n');
+                                fileWriter.append("payment    " + billsNumber + "    - " + amount + '\n');
                                 fileWriter.close();
                                 enter();
                             }
