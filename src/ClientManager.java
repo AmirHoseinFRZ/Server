@@ -1,8 +1,19 @@
 import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Properties;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 
 public class ClientManager implements Runnable {
     Socket client;
@@ -22,6 +33,8 @@ public class ClientManager implements Runnable {
             outputStream = client.getOutputStream();
             in = new DataInputStream(inputStream);
             out = new DataOutputStream(outputStream);
+            check();
+            loanCheck();
             signUpOrSignIn();
         } catch (Exception e) {
             e.printStackTrace();
@@ -167,6 +180,33 @@ public class ClientManager implements Runnable {
                             number += name.charAt(j);
                     }
                     out.writeBoolean(true);
+                    /*File file1 = new File("src/" + nationalCode_PassWord + "/information.txt");
+                    FileReader fileReader = new FileReader(file1);
+                    BufferedReader bufferedReader = new BufferedReader(fileReader);
+                    String to = "";
+                    for(int x = 0; x < 5; x++)
+                    {
+                        String line = bufferedReader.readLine();
+                        if(x == 3)
+                            to = line;
+                    }
+                    String from = "dehnavi_firoozi_bank@yahoo.com";
+                    String host = "localhost";
+                    Properties properties = System.getProperties();
+                    properties.setProperty("mail.smtp.host", host);
+                    Session session = Session.getDefaultInstance(properties);
+                    try {
+                        MimeMessage message = new MimeMessage(session);
+                        message.setFrom(new InternetAddress(from));
+                        message.addRecipient(Message.RecipientType.TO,new InternetAddress(to));
+                        message.setSubject("Ping");
+                        message.setText("You have logged in your account!");
+                        Transport.send(message);
+                        System.out.println("message sent successfully....");
+                    }
+                    catch (MessagingException messagingException) {
+                        messagingException.printStackTrace();
+                    }*/
                     enter();
                 }
                 else
@@ -491,6 +531,7 @@ public class ClientManager implements Runnable {
                         PrintWriter printWriter = new PrintWriter(file);
                         printWriter.println(amount);
                         printWriter.println(payback);
+                        printWriter.println("0");
                         printWriter.close();
                         File file1 = new File("src/" + nationalCode_PassWord + "/" + alias_Password + "." + number + ".txt");
                         FileReader fileReader = new FileReader(file1);
@@ -516,7 +557,7 @@ public class ClientManager implements Runnable {
                         printWriter1.close();
                         File file2 = new File("src/" + nationalCode_PassWord + "/" + "transaction" + alias_Password+ ".txt");
                         FileWriter fileWriter = new FileWriter(file2, true);
-                        fileWriter.append("loan    "+ "+ " + Double.valueOf(amount) + '\n');
+                        fileWriter.append("loan    " + "+ " + Double.valueOf(amount) + '\n');
                         fileWriter.close();
                         enter();
                     }
@@ -655,7 +696,6 @@ public class ClientManager implements Runnable {
                         fileReader.close();
                         bufferedReader.close();
                         System.out.println(amount);
-                        account.delete();
                         String folderName = "";
                         String destinationAlis_Password_number = "";
                         File destinationFile = null;
@@ -673,7 +713,7 @@ public class ClientManager implements Runnable {
                                     filenames.add(file.list()[j]);
                                 int z = 0;
                                 while (z < filenames.size()) {
-                                    if (filenames.get(z).contains(destinationNumber) && !(filenames.get(z).contains("transaction"))) {
+                                    if (filenames.get(z).contains("." + destinationNumber) && !(filenames.get(z).contains("transaction"))) {
                                         System.out.println("if");
                                         File file1 = new File("src/" + file.getName() + "/" + filenames.get(z));
                                         destinationFile = file1;
@@ -690,6 +730,7 @@ public class ClientManager implements Runnable {
                         if(destinationFile != null)
                         {
                             out.writeBoolean(true);
+                            Files.delete(account.toPath());
                             String information = "0";
                             i = 0;
                             FileReader fileReader1 = new FileReader(destinationFile);
@@ -705,8 +746,8 @@ public class ClientManager implements Runnable {
                                 }
                                 i++;
                             }
-                            fileReader.close();
-                            bufferedReader.close();
+                            fileReader1.close();
+                            bufferedReader1.close();
                             PrintWriter printWriter = new PrintWriter(destinationFile);
                             printWriter.print(information);
                             printWriter.close();
@@ -723,10 +764,10 @@ public class ClientManager implements Runnable {
                             fileWriter.append("Transmission    " + number + "    " + "+ " + Double.valueOf(amount) + '\n');
                             fileWriter.close();
                             File file2 = new File("src/" + nationalCode_PassWord + "/transaction" + alias_Password + ".txt");
-                            file2.delete();
+                            Files.delete(file2.toPath());
                             File file1 = new File("src/" + nationalCode_PassWord + "/loan." + alias_Password + ".txt");
                             if (file1.exists())
-                                file1.delete();
+                                Files.delete(file1.toPath());
                             signUpOrSignIn();
                         }
                         else
@@ -750,5 +791,313 @@ public class ClientManager implements Runnable {
             e.printStackTrace();
         }
 
+    }
+    public void loanCheck() throws IOException {
+        File src = new File("src/");
+        int i = 0;
+        while (i < src.list().length)
+        {
+            File user = new File("src/" + src.list()[i]);
+            if(!(user.getName().equals("payment")) && user.isDirectory())
+            {
+                int j = 0;
+                while (j < user.list().length)
+                {
+                    File file = new File("src/" + user.getName() + "/" + user.list()[j]);
+                    if(!(file.getName().contains("loan")) && file.getName().contains("."))
+                    {
+                        BasicFileAttributes attributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+                        long creationTime = attributes.creationTime().to(TimeUnit.MILLISECONDS);
+                        Date date = new Date();
+                        System.out.println(date.getTime());
+                        System.out.println(creationTime);
+                        long time = Long.valueOf(date.getTime());
+                        if((time - creationTime) % 2592000 == 1)
+                        {
+                            FileReader fileReader = new FileReader(file);
+                            BufferedReader bufferedReader = new BufferedReader(fileReader);
+                            String amount = "";
+                            String alias = "";
+                            String password = "";
+                            int z = 0;
+                            for(int x = 0; x < 5; x++)
+                            {
+                                String line = bufferedReader.readLine();
+                                if (x == 1)
+                                    alias = line;
+                                if(x == 3)
+                                    amount = line;
+                                if (x == 4)
+                                    password = line;
+                            }
+                            fileReader.close();
+                            bufferedReader.close();
+                            /////////////////////////////////////////////////////////////////////////////////////////////new loan file
+                            File file1 = new File("src/" + user.getName() + "/loan." + alias + "-" + password + ".txt");
+                            FileReader fileReader1 = new FileReader(file1);
+                            BufferedReader bufferedReader1 = new BufferedReader(fileReader1);
+                            String loanAmount = bufferedReader1.readLine();
+                            String loanType = bufferedReader1.readLine();
+                            String payed = bufferedReader1.readLine();
+                            fileReader1.close();
+                            bufferedReader1.close();
+                            System.out.println("amount is :" + loanAmount);
+                            System.out.println("loan type is :" + loanType);
+                            System.out.println(payed);
+                            String information = "";
+                            if(loanType.equals("one month"))
+                            {
+                                amount = String.valueOf(Double.valueOf(amount) - (Double.valueOf(loanAmount)));
+                                i = 0;
+                                FileReader fileReader2 = new FileReader(file);
+                                BufferedReader bufferedReader2 = new BufferedReader(fileReader2);
+                                while (i < 5) {
+                                    String line = bufferedReader2.readLine();
+                                    if (i == 3) {
+                                        information += String.valueOf(Double.valueOf(amount)) + '\n';
+                                    } else {
+                                        if (i == 0)
+                                            information = line + '\n';
+                                        else
+                                            information += line + '\n';
+                                    }
+                                    i++;
+                                }
+                                fileReader1.close();
+                                bufferedReader1.close();
+                                PrintWriter printWriter = new PrintWriter(file);
+                                printWriter.print(information);
+                                printWriter.close();
+                                File file2 = new File("src/" + user.getName() + "/" + "transaction" + alias + "-" + password + ".txt");
+                                FileWriter fileWriter = new FileWriter(file2, true);
+                                fileWriter.append("loan    " + "- " + Double.valueOf(loanAmount) + '\n');
+                                fileWriter.close();
+                                file1.delete();
+                            }
+                            else if(loanType.equals("three month"))
+                            {
+                                amount = String.valueOf(Double.valueOf(amount) - (Double.valueOf(loanAmount)) / 3);
+                                i = 0;
+                                FileReader fileReader2 = new FileReader(file);
+                                BufferedReader bufferedReader2 = new BufferedReader(fileReader2);
+                                while (i < 5) {
+                                    String line = bufferedReader2.readLine();
+                                    if (i == 3) {
+                                        information += String.valueOf(Double.valueOf(amount)) + '\n';
+                                    } else {
+                                        if (i == 0)
+                                            information = line + '\n';
+                                        else
+                                            information += line + '\n';
+                                    }
+                                    i++;
+                                }
+                                fileReader1.close();
+                                bufferedReader1.close();
+                                PrintWriter printWriter = new PrintWriter(file);
+                                printWriter.print(information);
+                                printWriter.close();
+                                information = "";
+                                FileReader fileReader3 = new FileReader(file1);
+                                BufferedReader bufferedReader3 = new BufferedReader(fileReader3);
+                                information = bufferedReader3.readLine() + '\n';
+                                information += bufferedReader3.readLine() + '\n';
+                                information += String.valueOf(Integer.parseInt(payed) + 1) + '\n';
+                                PrintWriter printWriter1 = new PrintWriter(file1);
+                                printWriter1.print(information);
+                                printWriter1.close();
+                                File file2 = new File("src/" + user.getName() + "/" + "transaction" + alias + "-" + password + ".txt");
+                                FileWriter fileWriter = new FileWriter(file2, true);
+                                fileWriter.append("loan    " + "- " + Double.valueOf(loanAmount) / 3 + '\n');
+                                fileWriter.close();
+                                if (Integer.parseInt(payed) == 2)
+                                    file1.delete();
+                            }
+                            else if(loanType.equals("six month"))
+                            {
+                                amount = String.valueOf(Double.valueOf(amount) - (Double.valueOf(loanAmount)) / 6);
+                                i = 0;
+                                FileReader fileReader2 = new FileReader(file);
+                                BufferedReader bufferedReader2 = new BufferedReader(fileReader2);
+                                while (i < 5) {
+                                    String line = bufferedReader2.readLine();
+                                    if (i == 3) {
+                                        information += String.valueOf(Double.valueOf(amount)) + '\n';
+                                    } else {
+                                        if (i == 0)
+                                            information = line + '\n';
+                                        else
+                                            information += line + '\n';
+                                    }
+                                    i++;
+                                }
+                                fileReader1.close();
+                                bufferedReader1.close();
+                                PrintWriter printWriter = new PrintWriter(file);
+                                printWriter.print(information);
+                                printWriter.close();
+                                information = "";
+                                FileReader fileReader3 = new FileReader(file1);
+                                BufferedReader bufferedReader3 = new BufferedReader(fileReader3);
+                                information = bufferedReader3.readLine() + '\n';
+                                information += bufferedReader3.readLine() + '\n';
+                                information += String.valueOf(Integer.parseInt(payed) + 1) + '\n';
+                                PrintWriter printWriter1 = new PrintWriter(file1);
+                                printWriter1.print(information);
+                                printWriter1.close();
+                                File file2 = new File("src/" + user.getName() + "/" + "transaction" + alias + "-" + password + ".txt");
+                                FileWriter fileWriter = new FileWriter(file2, true);
+                                fileWriter.append("loan    " + "- " + Double.valueOf(loanAmount) / 6 + '\n');
+                                fileWriter.close();
+                                if (Integer.parseInt(payed) == 5)
+                                    file1.delete();
+                            }
+                            else if(loanType.equals("one year"))
+                            {
+                                amount = String.valueOf(Double.valueOf(amount) - (Double.valueOf(loanAmount)) / 12);
+                                i = 0;
+                                FileReader fileReader2 = new FileReader(file);
+                                BufferedReader bufferedReader2 = new BufferedReader(fileReader2);
+                                while (i < 5) {
+                                    String line = bufferedReader2.readLine();
+                                    if (i == 3) {
+                                        information += String.valueOf(Double.valueOf(amount)) + '\n';
+                                    } else {
+                                        if (i == 0)
+                                            information = line + '\n';
+                                        else
+                                            information += line + '\n';
+                                    }
+                                    i++;
+                                }
+                                fileReader1.close();
+                                bufferedReader1.close();
+                                PrintWriter printWriter = new PrintWriter(file);
+                                printWriter.print(information);
+                                printWriter.close();
+                                information = "";
+                                FileReader fileReader3 = new FileReader(file1);
+                                BufferedReader bufferedReader3 = new BufferedReader(fileReader3);
+                                information = bufferedReader3.readLine() + '\n';
+                                information += bufferedReader3.readLine() + '\n';
+                                information += String.valueOf(Integer.parseInt(payed) + 1) + '\n';
+                                PrintWriter printWriter1 = new PrintWriter(file1);
+                                printWriter1.print(information);
+                                printWriter1.close();
+                                File file2 = new File("src/" + user.getName() + "/" + "transaction" + alias + "-" + password + ".txt");
+                                FileWriter fileWriter = new FileWriter(file2, true);
+                                fileWriter.append("loan    " + "- " + Double.valueOf(loanAmount) / 12 + '\n');
+                                fileWriter.close();
+                                if (Integer.parseInt(payed) == 11)
+                                    file1.delete();
+                            }
+                        }
+                    }
+                    j++;
+                }
+            }
+            i++;
+        }
+    }
+    public void check() throws IOException {
+        File src = new File("src/");
+        int i = 0;
+        while (i < src.list().length)
+        {
+            File user = new File("src/" + src.list()[i]);
+            if(!(user.getName().equals("payment")) && user.isDirectory())
+            {
+                int j = 0;
+                while (j < user.list().length)
+                {
+                    File file = new File("src/" + user.getName() + "/" + user.list()[j]);
+                    if(!(file.getName().contains("loan") || file.getName().contains("transaction") || file.getName().contains("information")))
+                    {
+                        BasicFileAttributes attributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+                        long creationTime = attributes.creationTime().to(TimeUnit.MILLISECONDS);
+                        Date date = new Date();
+                        System.out.println(date.getTime());
+                        System.out.println(creationTime);
+                        long time = Long.valueOf(date.getTime());
+                        if((time - creationTime) % 2592000 == 1)
+                        {
+                            FileReader fileReader = new FileReader(file);
+                            BufferedReader bufferedReader = new BufferedReader(fileReader);
+                            String information = "";
+                            String accountType = "";
+                            String amount = "";
+                            for(int x = 0; x < 5; x++)
+                            {
+                                String line = bufferedReader.readLine();
+                                if(x == 2)
+                                {
+                                    information += line;
+                                    accountType = line;
+                                }
+                                if(x == 3)
+                                {
+                                    information += line;
+                                    amount = line;
+                                }
+                                else
+                                    information += line;
+                            }
+                            fileReader.close();
+                            bufferedReader.close();
+                            System.out.println("amount is :" + amount);
+                            System.out.println("account type is :" + accountType);
+                            if(accountType.equals("short saving"))
+                            {
+                                amount = String.valueOf(Double.valueOf(amount) + Double.valueOf(amount) * 0.07);
+                                int z = 0;
+                                FileReader fileReader1 = new FileReader(file);
+                                BufferedReader bufferedReader1 = new BufferedReader(fileReader1);
+                                while (z < 5) {
+                                    if (z == 3) {
+                                        information += String.valueOf((Double.valueOf(bufferedReader1.readLine()) + Double.valueOf(amount))) + '\n';
+                                    } else {
+                                        if (z == 0)
+                                            information = bufferedReader1.readLine() + '\n';
+                                        else
+                                            information += bufferedReader1.readLine() + '\n';
+                                    }
+                                    z++;
+                                }
+                                fileReader1.close();
+                                bufferedReader1.close();
+                                PrintWriter printWriter = new PrintWriter(file);
+                                printWriter.print(information);
+                                printWriter.close();
+                            }
+                            else if(accountType.equals("long saving") && ((Long.valueOf(time) - creationTime) / 2592000) % 12== 0)
+                            {
+                                amount = String.valueOf(Double.valueOf(amount) + Double.valueOf(amount) * 0.15);
+                                int z = 0;
+                                FileReader fileReader1 = new FileReader(file);
+                                BufferedReader bufferedReader1 = new BufferedReader(fileReader1);
+                                while (z < 5) {
+                                    if (z == 3) {
+                                        information += String.valueOf((Double.valueOf(bufferedReader1.readLine()) + Double.valueOf(amount))) + '\n';
+                                    } else {
+                                        if (z == 0)
+                                            information = bufferedReader1.readLine() + '\n';
+                                        else
+                                            information += bufferedReader1.readLine() + '\n';
+                                    }
+                                    z++;
+                                }
+                                fileReader1.close();
+                                bufferedReader1.close();
+                                PrintWriter printWriter = new PrintWriter(file);
+                                printWriter.print(information);
+                                printWriter.close();
+                            }
+                        }
+                    }
+                    j++;
+                }
+            }
+            i++;
+        }
     }
 }
